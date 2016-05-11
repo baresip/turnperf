@@ -30,6 +30,7 @@ struct allocator {
 	bool server_auth;
 	char server_software[256];
 	struct sa mapped_addr;
+	uint32_t lifetime;
 
 	uint64_t tick, tock;
 	uint32_t session_cookie;

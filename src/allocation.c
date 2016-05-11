@@ -97,6 +97,10 @@ static void perm_handler(void *arg)
 {
 	struct allocation *alloc = arg;
 
+	re_printf("%s to %J added.\n",
+		  alloc->turn_ind ? "Permission" : "Channel",
+		  &alloc->peer);
+
 	alloc->alloch(0, 0, "OK", &alloc->srv, &alloc->relay, alloc->arg);
 }
 
@@ -208,6 +212,11 @@ static void turnc_handler(int err, uint16_t scode, const char *reason,
 		allocator->mapped_addr = *mapped_addr;
 
 		allocator->server_info = true;
+
+		attr = stun_msg_attr(msg, STUN_ATTR_LIFETIME);
+		if (attr) {
+			allocator->lifetime = attr->v.lifetime;
+		}
 	}
 
 	peer = *mapped_addr;
@@ -378,6 +387,8 @@ static void dtls_estab_handler(void *arg)
 {
 	struct allocation *alloc = arg;
 	int err;
+
+	re_printf("allocation: DTLS established\n");
 
 	err = turnc_alloc(&alloc->turnc, NULL, STUN_TRANSP_DTLS,
 			  alloc->tlsc, TURN_LAYER,

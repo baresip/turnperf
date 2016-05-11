@@ -70,9 +70,12 @@ static void allocation_handler(int err, uint16_t scode, const char *reason,
 		re_printf("all allocations are ok.\n");
 
 		if (allocator->server_info) {
-			re_printf("\nserver:  %s, authentication=%s\n\n",
+			re_printf("\nserver:  %s, authentication=%s\n",
 				  allocator->server_software,
 				  allocator->server_auth ? "yes" : "no");
+			re_printf("         lifetime is %u seconds\n",
+				  allocator->lifetime);
+			re_printf("\n");
 			re_printf("public address: %j\n",
 				  &allocator->mapped_addr);
 		}
