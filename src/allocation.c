@@ -623,7 +623,7 @@ static void tmr_ui_handler(void *arg)
 	time_t duration = time(NULL) - allocator->traf_start_time;
 
 	static const char uiv[] = ".,-'-,.";
-	static unsigned uic = 0;
+	static size_t uic = 0;
 
 	tmr_start(&allocator->tmr_ui, 50, tmr_ui_handler, allocator);
 

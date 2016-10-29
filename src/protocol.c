@@ -22,7 +22,7 @@ int protocol_encode(struct mbuf *mb,
 	err |= mbuf_write_u32(mb, htonl(session_cookie));
 	err |= mbuf_write_u32(mb, htonl(alloc_id));
 	err |= mbuf_write_u32(mb, htonl(seq));
-	err |= mbuf_write_u32(mb, htonl(payload_len));
+	err |= mbuf_write_u32(mb, htonl((uint32_t)payload_len));
 	err |= mbuf_fill(mb, pattern, payload_len);
 
 	return err;

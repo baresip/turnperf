@@ -9,20 +9,20 @@
 #include "turnperf.h"
 
 
-void receiver_init(struct receiver *recv,
+void receiver_init(struct receiver *recvr,
 		   uint32_t exp_cookie, uint32_t exp_allocid)
 {
-	if (!recv)
+	if (!recvr)
 		return;
 
-	memset(recv, 0, sizeof(*recv));
+	memset(recvr, 0, sizeof(*recvr));
 
-	recv->cookie = exp_cookie;
-	recv->allocid = exp_allocid;
+	recvr->cookie = exp_cookie;
+	recvr->allocid = exp_allocid;
 }
 
 
-int receiver_recv(struct receiver *recv,
+int receiver_recv(struct receiver *recvr,
 		  const struct sa *src, struct mbuf *mb)
 {
 	struct hdr hdr;
@@ -30,12 +30,12 @@ int receiver_recv(struct receiver *recv,
 	size_t start, sz;
 	int err;
 
-	if (!recv || !mb)
+	if (!recvr || !mb)
 		return EINVAL;
 
-	if (!recv->ts_start)
-		recv->ts_start = now;
-	recv->ts_last = now;
+	if (!recvr->ts_start)
+		recvr->ts_start = now;
+	recvr->ts_last = now;
 
 	start = mb->pos;
 	sz = mbuf_get_left(mb);
@@ -46,7 +46,7 @@ int receiver_recv(struct receiver *recv,
 		if (err == EBADMSG) {
 			re_fprintf(stderr, "[%u] ignore a non-Turnperf packet"
 				   " from %J (%zu bytes)\n",
-				   recv->allocid, src, sz);
+				   recvr->allocid, src, sz);
 			hexdump(stderr, mb->buf + start, sz);
 			return 0;
 		}
@@ -58,28 +58,28 @@ int receiver_recv(struct receiver *recv,
 	}
 
 	/* verify packet */
-	if (hdr.session_cookie != recv->cookie) {
+	if (hdr.session_cookie != recvr->cookie) {
 		re_fprintf(stderr, "invalid cookie received"
 			   " from %J [exp=%x, actual=%x] (%zu bytes)\n",
-			   src, recv->cookie, hdr.session_cookie, sz);
+			   src, recvr->cookie, hdr.session_cookie, sz);
 		protocol_packet_dump(&hdr);
 		return EPROTO;
 	}
-	if (hdr.alloc_id != recv->allocid) {
+	if (hdr.alloc_id != recvr->allocid) {
 		re_fprintf(stderr, "invalid allocation-ID received"
 			   " from %J [exp=%u, actual=%u] (%zu bytes)\n",
-			   src, hdr.alloc_id, recv->allocid, sz);
+			   src, hdr.alloc_id, recvr->allocid, sz);
 		protocol_packet_dump(&hdr);
 		return EPROTO;
 	}
 
-	if (recv->last_seq) {
-		if (hdr.seq <= recv->last_seq) {
+	if (recvr->last_seq) {
+		if (hdr.seq <= recvr->last_seq) {
 			re_fprintf(stderr, "receiver[%u]: late or "
 				   " out-of-order packet from %J"
 				   " (last_seq=%u, seq=%u)\n",
-				   recv->allocid, src,
-				   recv->last_seq, hdr.seq);
+				   recvr->allocid, src,
+				   recvr->last_seq, hdr.seq);
 		}
 	}
 
@@ -87,36 +87,36 @@ int receiver_recv(struct receiver *recv,
 	protocol_packet_dump(&hdr);
 #endif
 
-	recv->total_bytes   += sz;
-	recv->total_packets += 1;
+	recvr->total_bytes   += sz;
+	recvr->total_packets += 1;
 
-	recv->last_seq = hdr.seq;
+	recvr->last_seq = hdr.seq;
 
 	return 0;
 }
 
 
-void receiver_print(const struct receiver *recv)
+void receiver_print(const struct receiver *recvr)
 {
 	double duration;
 
-	if (!recv || !recv->ts_start)
+	if (!recvr || !recvr->ts_start)
 		return;
 
-	duration = recv->ts_last - recv->ts_start;
+	duration = recvr->ts_last - recvr->ts_start;
 
 	re_printf("receiver: %zu bytes received in %.3f seconds"
 		  " (average bitrate was %.1f bit/s)\n",
-		  recv->total_bytes, duration / 1000.0,
-		  recv->total_bytes / (duration / 1000.0 / 8) );
+		  recvr->total_bytes, duration / 1000.0,
+		  recvr->total_bytes / (duration / 1000.0 / 8) );
 }
 
 
-double receiver_get_bitrate(const struct receiver *recv)
+double receiver_get_bitrate(const struct receiver *recvr)
 {
 	double duration;
 
-	duration = recv->ts_last - recv->ts_start;
+	duration = recvr->ts_last - recvr->ts_start;
 
-	return recv->total_bytes / (duration / 1000.0 / 8);
+	return recvr->total_bytes / (duration / 1000.0 / 8);
 }
